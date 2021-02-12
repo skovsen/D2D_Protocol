@@ -2,9 +2,9 @@ module alexandra.dk/D2D_Agent
 
 go 1.15
 
-replace github.com/alexandrainst/D2D-communication => /Users/skov/Alexandra/Alexandra/D2D/src/comm
+replace github.com/skovsen/D2D-communication => /Users/skov/DTD/personal/alexandra/D2D/src/d2d_communication
 
-replace github.com/alexandrainst/agentlogic => /Users/skov/Alexandra/Alexandra/D2D/src/agentlogic
+replace github.com/skovsen/agentlogic => /Users/skov/DTD/personal/alexandra/D2D/src/d2d_agentlogic
 
 require (
 	github.com/alexandrainst/D2D-communication v0.9.1
@@ -16,4 +16,6 @@ require (
 	github.com/libp2p/go-libp2p-tls v0.1.3 // indirect
 	github.com/multiformats/go-multiaddr v0.3.1 // indirect
 	github.com/paulmach/orb v0.1.7
+	github.com/skovsen/D2D-communication v0.9.1
+	github.com/skovsen/agentlogic v0.2.1
 )

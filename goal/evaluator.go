@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"alexandra.dk/D2D_Agent/workers"
-	"github.com/alexandrainst/agentlogic"
+	"github.com/skovsen/agentlogic"
 	"github.com/paulmach/orb"
 )
 

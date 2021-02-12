@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/alexandrainst/agentlogic"
+	"github.com/skovsen/agentlogic"
 )
 
 func loadMetadata(path string, isRand bool, randId int) agentlogic.Agent {

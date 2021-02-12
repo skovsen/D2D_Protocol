@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/alexandrainst/agentlogic"
+	"github.com/skovsen/agentlogic"
 )
 
 func loadMission(path string) *agentlogic.Mission {

@@ -10,8 +10,8 @@ import (
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geojson"
 
-	comm "github.com/alexandrainst/D2D-communication"
-	"github.com/alexandrainst/agentlogic"
+	comm "github.com/skovsen/D2D-communication"
+	"github.com/skovsen/agentlogic"
 )
 
 var AgentType agentlogic.AgentType

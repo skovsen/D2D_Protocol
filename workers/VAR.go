@@ -7,7 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 
-	"github.com/alexandrainst/agentlogic"
+	"github.com/skovsen/agentlogic"
 )
 
 func CheckGoal(goal agentlogic.Goal, position agentlogic.Vector, poi interface{}) bool {

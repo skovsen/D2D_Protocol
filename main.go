@@ -14,8 +14,8 @@ import (
 	"alexandra.dk/D2D_Agent/goal"
 	"alexandra.dk/D2D_Agent/model"
 	"alexandra.dk/D2D_Agent/workers"
-	comm "github.com/alexandrainst/D2D-communication"
-	"github.com/alexandrainst/agentlogic"
+	comm "github.com/skovsen/D2D-communication"
+	"github.com/skovsen/agentlogic"
 	"github.com/jinzhu/copier"
 )
 
