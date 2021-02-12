@@ -3,8 +3,8 @@ package goal
 import (
 	"log"
 
-	"alexandra.dk/D2D_Agent/workers"
-	"github.com/skovsen/agentlogic"
+	"github.com/skovsen/D2D_Protocol/workers"
+	agentlogic "github.com/skovsen/D2D_AgentLogic"
 	"github.com/paulmach/orb"
 )
 

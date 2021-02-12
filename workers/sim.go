@@ -4,9 +4,9 @@ import (
 	"log"
 	"time"
 
-	comm "github.com/skovsen/D2D-communication"
+	comm "github.com/skovsen/D2D_Communication"
 
-	"github.com/skovsen/agentlogic"
+	agentlogic "github.com/skovsen/D2D_AgentLogic"
 )
 
 func workAsSim() {
