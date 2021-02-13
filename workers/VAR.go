@@ -9,6 +9,7 @@ import (
 
 	agentlogic "github.com/skovsen/D2D_AgentLogic"
 )
+var first =true
 
 func CheckGoal(goal agentlogic.Goal, position agentlogic.Vector, poi interface{}) bool {
 	if goal.Do == "matchImage" {
@@ -27,7 +28,12 @@ func CheckGoal(goal agentlogic.Goal, position agentlogic.Vector, poi interface{}
 		client := &http.Client{}
 		resp, err := client.Do(request)
 		if err != nil {
-			log.Fatal(err)
+			if first{
+				log.Println("Not able to post goal to endpoint. Ignoring")
+				first = false
+			}
+			
+			// log.Fatal(err)
 		} else {
 			fmt.Println(resp.StatusCode)
 			if resp.StatusCode == 200 {
@@ -74,6 +80,10 @@ func newfileUploadRequest(uri string, paramName string, imgString string) (*http
 
 	//return http.NewRequest("POST", uri, body)
 	request, err := http.NewRequest("POST", uri, body)
+	if err!=nil{
+		log.Println(err)
+		return nil, err
+	}
 
 	request.Header.Add("Content-Type", writer.FormDataContentType())
 	return request, err

@@ -12,8 +12,9 @@ fi
 for ((i=1; i<=$2; i++))
 do
     echo "starting.."
-    ./D2D_Agent -name="$1" -isRand=true & 
+    ./D2D_Protocol -name="$1" -isRand=true & 
     FOO_PID=$!
+    sleep 1
 done
 
 wait

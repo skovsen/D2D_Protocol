@@ -33,7 +33,7 @@ var recalcMux = &sync.Mutex{}
 
 var missionaireID *string
 
-const zoomLevel = 25
+const zoomLevel = 28
 
 const discoveryPath = "D2D_Discovery"
 const statePath = "D2D_State"
@@ -43,6 +43,10 @@ const recalculationPath = "D2D_Recalculation"
 const timeForReorganizationWarning = 5      //secs
 const timeForReorganizationWork = 10        //secs
 const timeBetweenReorganisationCheck = 2000 //mili secs
+
+const timeBeforeSendMission = 5 //secs
+var timeSeenNewAgent = time.Now().Unix()
+var missionsSent = false
 
 func main() {
 
@@ -140,13 +144,18 @@ func initAgent(isCtrl *bool, isSim *bool, isRand *bool, name *string) *agentlogi
 }
 
 func startDiscoveryWork() {
+	first := false
 	go func() {
 		log.Println("Waiting to find companions")
 		for {
 
 			msg := <-comm.DiscoveryChannel
 			agentID := msg.Content.UUID
-
+			if !first{
+				first=true
+				log.Println("FIRST agent!")
+				log.Println(time.Now().Unix())
+			}
 			//log.Println(msg)
 			agentsMux.Lock()
 			_, ok := agents[agentID]
@@ -180,7 +189,8 @@ func startDiscoveryWork() {
 					}
 
 				}
-
+				timeSeenNewAgent = time.Now().Unix()
+				missionsSent = false
 				log.Printf(workers.MySelf.UUID+": Found a buddy with nick: %s - adding to list \n", msg.Content.Nick)
 
 				ah := &agentlogic.AgentHolder{
@@ -196,11 +206,11 @@ func startDiscoveryWork() {
 
 				//setup mission channel to agent
 
-				if missionaireID != nil && *missionaireID == workers.MySelf.UUID {
-					//this is incredible slow and is called everytime a new peer is discovered
-					//TODO: look into a faster approach
-					sendMissions(agents)
-				}
+				// if missionaireID != nil && *missionaireID == workers.MySelf.UUID {
+				// 	//this is incredible slow and is called everytime a new peer is discovered
+				// 	//TODO: look into a faster approach
+				// 	sendMissions(agents)
+				// }
 
 			}
 		}
@@ -259,7 +269,7 @@ func startReorganization() {
 		//now := int64(time.Nanosecond) * time.Now().UnixNano() / int64(time.Millisecond)
 		for {
 
-			agentsMux.Lock()
+			
 			// if agentType == agentlogic.ContextAgent {
 			// 	log.Println(MySelf.UUID + " is here")
 			// }
@@ -276,54 +286,67 @@ func startReorganization() {
 				// }
 				//now = tmp
 			}
+			go func ()  {
+				agentsMux.Lock()
+				for id, ah := range agents {
+					if id == workers.MySelf.UUID {
+						//log.Println("no need to check self")
+						//no need to check if messages has come in from self
+						continue
+					}
+					//log.Printf("ls: %v regor: %v combined: %v < now %v \n", ah.LastSeen, timeForReorganizationWarning, (ah.LastSeen + (timeForReorganizationWarning)), time.Now().Unix())
+					if ah.LastSeen+(timeForReorganizationWarning) < time.Now().Unix() {
+						if ah.LastSeen+(timeForReorganizationWork) < time.Now().Unix() {
+							log.Printf(workers.MySelf.UUID+": has not seen agent with nick: %s for >%d seconds. Commencing reorganization \n", ah.Agent.Nick, timeForReorganizationWork)
+							//close the connection for sending mission if controller
+							if workers.AgentType == agentlogic.ControllerAgent {
+								go comm.ClosePath(ah.Agent, comm.MissionMessageType)
+							}
+							delete(agents, id)
+							reorgMux.Lock()
+							lostAgents[id] = append(lostAgents[id], workers.MySelf.UUID)
+							reorgMux.Unlock()
+							//get ids of all living agents
+							//has to be here because of deadlock otherwise
+							livingIds := make([]string, 0, len(agents))
+							for k := range agents {
+								livingIds = append(livingIds, k)
+							}
+							lostAgentsChanged <- livingIds
+							if ah.AgentType == agentlogic.ControllerAgent && workers.GetController() != nil && ah.Agent.UUID == workers.GetController().UUID {
+								workers.RemoveController()
+							}
 
-			for id, ah := range agents {
-				if id == workers.MySelf.UUID {
-					//log.Println("no need to check self")
-					//no need to check if messages has come in from self
-					continue
-				}
-				//log.Printf("ls: %v regor: %v combined: %v < now %v \n", ah.LastSeen, timeForReorganizationWarning, (ah.LastSeen + (timeForReorganizationWarning)), time.Now().Unix())
-				if ah.LastSeen+(timeForReorganizationWarning) < time.Now().Unix() {
-					if ah.LastSeen+(timeForReorganizationWork) < time.Now().Unix() {
-						log.Printf(workers.MySelf.UUID+": has not seen agent with nick: %s for >%d seconds. Commencing reorganization \n", ah.Agent.Nick, timeForReorganizationWork)
-						//close the connection for sending mission if controller
-						if workers.AgentType == agentlogic.ControllerAgent {
-							go comm.ClosePath(ah.Agent, comm.MissionMessageType)
-						}
-						delete(agents, id)
-						reorgMux.Lock()
-						lostAgents[id] = append(lostAgents[id], workers.MySelf.UUID)
-						reorgMux.Unlock()
-						//get ids of all living agents
-						//has to be here because of deadlock otherwise
-						livingIds := make([]string, 0, len(agents))
-						for k := range agents {
-							livingIds = append(livingIds, k)
-						}
-						lostAgentsChanged <- livingIds
-						if ah.AgentType == agentlogic.ControllerAgent && workers.GetController() != nil && ah.Agent.UUID == workers.GetController().UUID {
-							workers.RemoveController()
-						}
+							go comm.SendReorganization(ah.Agent, workers.MySelf.UUID)
 
-						go comm.SendReorganization(ah.Agent, workers.MySelf.UUID)
+							if *UseViz {
+								go func(agent agentlogic.Agent) {
+									m := comm.DiscoveryMessage{
+										MessageMeta: comm.MessageMeta{MsgType: comm.ReorganizationMessageType, SenderId: workers.MySelf.UUID, SenderType: workers.AgentType},
+										Content:     agent,
+									}
+									comm.ChannelVisualization <- &m
+								}(ah.Agent)
 
-						if *UseViz {
-							go func(agent agentlogic.Agent) {
-								m := comm.DiscoveryMessage{
-									MessageMeta: comm.MessageMeta{MsgType: comm.ReorganizationMessageType, SenderId: workers.MySelf.UUID, SenderType: workers.AgentType},
-									Content:     agent,
-								}
-								comm.ChannelVisualization <- &m
-							}(ah.Agent)
-
+							}
+						} else {
+							log.Printf("has not seen agent with nick: %s for >%d seconds \n", ah.Agent.Nick, timeForReorganizationWarning)
 						}
-					} else {
-						log.Printf("has not seen agent with nick: %s for >%d seconds \n", ah.Agent.Nick, timeForReorganizationWarning)
 					}
 				}
-			}
-			agentsMux.Unlock()
+				agentsMux.Unlock()
+				//we only send missions out after the swarm has stabilized. So here we check if it's time to send out missions
+				if missionaireID != nil && *missionaireID == workers.MySelf.UUID && len(agents)>0{
+					// log.Printf("diff: (%d) %d + %d > %d \n", (timeSeenNewAgent+ timeBeforeSendMission),timeSeenNewAgent, timeBeforeSendMission, time.Now().Unix())
+					if !missionsSent && (timeSeenNewAgent+ timeBeforeSendMission<time.Now().Unix()){
+						diff := time.Now().Unix()-timeSeenNewAgent
+						log.Printf("time since new agent in swarm: %d sec(s), sending missions to swarm \n",diff)
+						go sendMissions(agents)
+						missionsSent = true
+					}
+				}
+			}()
+			
 
 			time.Sleep(timeBetweenReorganisationCheck * time.Millisecond)
 		}
@@ -520,6 +543,7 @@ func startReorganization() {
 				if *missionaireID == workers.MySelf.UUID {
 					log.Println("whoaaa...I'm the new mission calculator. Better go to work")
 					sendMissions(agents)
+					missionsSent = true
 
 				}
 			} else {
@@ -597,7 +621,6 @@ func recalculateMission(agents map[string]agentlogic.AgentHolder) map[string]age
 		return nil
 	}
 	agentsMux.Lock()
-
 	missions, err := agentlogic.ReplanMission(*workers.SwarmMission, agents, zoomLevel)
 
 	agentsMux.Unlock()
@@ -621,18 +644,17 @@ func recalculateMission(agents map[string]agentlogic.AgentHolder) map[string]age
 
 func sendMissions(agents map[string]agentlogic.AgentHolder) {
 	log.Println("Starting sending new missions")
-
+	log.Print("LAST: ")
+	log.Println(time.Now().Unix())
 	if workers.AgentType == agentlogic.ControllerAgent && len(agents) == 0 {
 		log.Println("No agents to send mission to! I'm all alone")
 		return
 	}
-
-	tmp := recalculateMission(agents)
-
+	//tmp := recalculateMission(agents)
 	var tmpAgents = make(map[string]agentlogic.AgentHolder)
-
+	
 	agentsMux.Lock()
-	agents = tmp
+	//agents = tmp
 	for id, ah := range agents {
 		tah := agentlogic.AgentHolder{}
 		//log.Printf("miss %v\n", len(ah.State.Mission.Geometry.(orb.Polygon)[0]))
@@ -640,11 +662,19 @@ func sendMissions(agents map[string]agentlogic.AgentHolder) {
 		copier.Copy(&tah, ah)
 
 		tmpAgents[id] = tah
+		// if id != workers.MySelf.UUID {
+		// 	comm.InitCommunicationType(id, comm.MissionMessageType)
+		// }
+	}
+	agentsMux.Unlock()
+	tmp := recalculateMission(tmpAgents)
+	for id := range tmp {
+		//log.Printf("miss %v\n", len(ah.State.Mission.Geometry.(orb.Polygon)[0]))
 		if id != workers.MySelf.UUID {
 			comm.InitCommunicationType(id, comm.MissionMessageType)
 		}
 	}
-	agentsMux.Unlock()
+
 
 	broadcastMission(tmpAgents)
 }
