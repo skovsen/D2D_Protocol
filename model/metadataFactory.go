@@ -49,6 +49,7 @@ func GetMetadataForAgent(isSim *bool, isCtrl *bool, isRand bool, name *string) a
 			tmp = *name
 		}
 		randId = rand.Intn(10000)
+		log.Println(randId)
 		//pick between agent1 and 2
 
 		//path = "./metadata/randomAgent" + strconv.Itoa(id) + ".json"

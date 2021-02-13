@@ -231,7 +231,7 @@ func startStateWork() {
 			agentsMux.Lock()
 			if ah, ok := agents[agentID]; ok {
 
-				if workers.MySelf.UUID == *missionaireID && ah.State.Mission.Geometry != nil {
+				if missionaireID!=nil && workers.MySelf.UUID == *missionaireID && ah.State.Mission.Geometry != nil {
 					if state.Mission.Geometry == nil {
 						//agent is sending a blank mission, while controller belives that it should have
 						//resending...
