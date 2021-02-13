@@ -33,7 +33,7 @@ var recalcMux = &sync.Mutex{}
 
 var missionaireID *string
 
-const zoomLevel = 28
+const zoomLevel = 25
 
 const discoveryPath = "D2D_Discovery"
 const statePath = "D2D_State"
@@ -440,16 +440,16 @@ func startReorganization() {
 					//find the new agent to calculate new mission split
 					log.Printf("Swarm agrees that %v is gone \n", id)
 					updatedNeeded = true
-
+					recalcMux.Lock()
 					if _, ok := agentsRecalculator[id]; ok {
 						//check to see if the dead agent were in the middle of a recalculation process
 						//if so, remove it, as not to confuse remaining agents
-						recalcMux.Lock()
+						
 						delete(agentsRecalculator, id)
-						recalcMux.Unlock()
+						
 						log.Println(workers.MySelf.UUID + ": " + id + " was in a recalculation process. It is removed from that.")
 					}
-
+					recalcMux.Unlock()
 					//log.Printf("Agent with id %v will handle calculations for new missions \n", recalculatorId)
 				} else {
 					//log.Println("no agreement in swarm")
@@ -470,7 +470,9 @@ func startReorganization() {
 				} else {
 					recalcAgent = agents[recalculatorID].Agent
 				}
+				recalcMux.Lock()
 				agentsRecalculator[workers.MySelf.UUID] = recalcAgent.UUID
+				recalcMux.Unlock()
 				if len(agents) > 1 {
 
 					comm.SendRecalculation(recalcAgent, workers.MySelf.UUID)

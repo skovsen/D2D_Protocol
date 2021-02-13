@@ -14,7 +14,7 @@ do
     echo "starting.."
     ./D2D_Protocol -name="$1" -isRand=true & 
     FOO_PID=$!
-    sleep 1
+    #sleep 1
 done
 
 wait
