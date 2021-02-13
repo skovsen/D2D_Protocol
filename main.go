@@ -163,7 +163,8 @@ func startDiscoveryWork() {
 			if ok {
 				//agent already known
 			} else {
-
+				log.Print("Add: ")
+				log.Println(time.Now().Unix())
 				if msg.MessageMeta.SenderType == agentlogic.ControllerAgent {
 
 					if workers.AgentType == agentlogic.ContextAgent && !workers.HasCtrl {
@@ -646,8 +647,6 @@ func recalculateMission(agents map[string]agentlogic.AgentHolder) map[string]age
 
 func sendMissions(agents map[string]agentlogic.AgentHolder) {
 	log.Println("Starting sending new missions")
-	log.Print("LAST: ")
-	log.Println(time.Now().Unix())
 	if workers.AgentType == agentlogic.ControllerAgent && len(agents) == 0 {
 		log.Println("No agents to send mission to! I'm all alone")
 		return
@@ -695,6 +694,10 @@ func broadcastMission(tmpAgents map[string]agentlogic.AgentHolder) {
 		sendMissionToAgent(ah.Agent, ah.State.Mission)
 	}
 	agentsMux.Unlock()
+	sort.Strings(tmpIds)
+	for _, nick:= range tmpIds{
+		log.Println(nick)
+	}
 	log.Printf(workers.MySelf.UUID+": Sent mision to %v \n", tmpIds)
 
 }
