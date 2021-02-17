@@ -163,8 +163,8 @@ func startDiscoveryWork() {
 			if ok {
 				//agent already known
 			} else {
-				log.Print("Add: ")
-				log.Println(time.Now().Unix())
+				// log.Print("Add: ")
+				// log.Println(time.Now().Unix())
 				if msg.MessageMeta.SenderType == agentlogic.ControllerAgent {
 
 					if workers.AgentType == agentlogic.ContextAgent && !workers.HasCtrl {
@@ -192,7 +192,7 @@ func startDiscoveryWork() {
 				}
 				timeSeenNewAgent = time.Now().Unix()
 				missionsSent = false
-				log.Printf(workers.MySelf.UUID+": Found a buddy with nick: %s - adding to list \n", msg.Content.Nick)
+				// log.Printf(workers.MySelf.UUID+": Found a buddy with nick: %s - adding to list \n", msg.Content.Nick)
 
 				ah := &agentlogic.AgentHolder{
 					Agent:     msg.Content,
@@ -248,12 +248,14 @@ func startStateWork() {
 			}
 			agentsMux.Unlock()
 			//check to see if the agent was believed to be dead
+			reorgMux.Lock()
 			if _, ok := lostAgents[agentID]; ok {
 				//we though it was dead - remove it from watchlist
-				reorgMux.Lock()
+				
 				delete(lostAgents, agentID)
-				reorgMux.Unlock()
+				
 			}
+			reorgMux.Unlock()
 		}
 	}()
 }
