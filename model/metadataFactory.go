@@ -48,7 +48,7 @@ func GetMetadataForAgent(isSim *bool, isCtrl *bool, isRand bool, name *string) a
 		} else {
 			tmp = *name
 		}
-		randId = rand.Intn(10000)
+		randId = rand.Intn(100000)
 		log.Println(randId)
 		//pick between agent1 and 2
 

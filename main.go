@@ -144,18 +144,13 @@ func initAgent(isCtrl *bool, isSim *bool, isRand *bool, name *string) *agentlogi
 }
 
 func startDiscoveryWork() {
-	first := false
 	go func() {
 		log.Println("Waiting to find companions")
 		for {
 
 			msg := <-comm.DiscoveryChannel
 			agentID := msg.Content.UUID
-			if !first{
-				first=true
-				log.Println("FIRST agent!")
-				log.Println(time.Now().Unix())
-			}
+			
 			//log.Println(msg)
 			agentsMux.Lock()
 			_, ok := agents[agentID]
@@ -163,8 +158,7 @@ func startDiscoveryWork() {
 			if ok {
 				//agent already known
 			} else {
-				// log.Print("Add: ")
-				// log.Println(time.Now().Unix())
+				
 				if msg.MessageMeta.SenderType == agentlogic.ControllerAgent {
 
 					if workers.AgentType == agentlogic.ContextAgent && !workers.HasCtrl {
@@ -204,14 +198,6 @@ func startDiscoveryWork() {
 				agents[agentID] = *ah
 
 				agentsMux.Unlock()
-
-				//setup mission channel to agent
-
-				// if missionaireID != nil && *missionaireID == workers.MySelf.UUID {
-				// 	//this is incredible slow and is called everytime a new peer is discovered
-				// 	//TODO: look into a faster approach
-				// 	sendMissions(agents)
-				// }
 
 			}
 		}
