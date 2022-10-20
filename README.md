@@ -6,8 +6,8 @@ Be awere, that being a PoC that there are quirks!
 ## Prerequisites
 This project has been created on MacOS 10.15.7, using Go 1.15. 
 It is based on LibP2P and utilzes the following modules from Alexandra institute:
-https://github.com/alexandrainst/agentlogic
-https://github.com/alexandrainst/D2D-communication
+https://github.com/skovsen/D2D_AgentLogic and
+https://github.com/skovsen/D2D_Communication
 
 These two modules handles, respectively the encapsulation of the data being worked on and the exact communication level. The structs in agentlogic can be extended to add extra fields as needed.
 
